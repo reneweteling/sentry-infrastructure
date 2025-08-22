@@ -1,0 +1,148 @@
+---
+- name: Provision Sentry Server
+  hosts: servers
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      apt:
+        name:
+          - snapd
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+          - curl
+          - wget
+          - git
+        state: present
+
+    - name: Create .gitconfig directory
+      file:
+        path: /root/.gitconfig
+        state: touch
+        mode: "0600"
+        owner: root
+        group: root
+
+    - name: Configure git with GitHub token from environment
+      shell: |
+        if [ -n "$GITHUB_TOKEN" ]; then
+          git config --system url."https://$GITHUB_TOKEN@github.com/".insteadOf "https://github.com/"
+          echo "GitHub token configured successfully"
+        else
+          echo "No GITHUB_TOKEN found in environment, skipping token configuration"
+        fi
+      environment:
+        GITHUB_TOKEN: "{{ lookup('env', 'GITHUB_TOKEN') }}"
+
+    - name: Check if swap file exists
+      stat:
+        path: /swapfile
+      register: swap_file
+
+    - name: Create 16GB swap file
+      command: fallocate -l 16G /swapfile
+      when: not swap_file.stat.exists
+
+    - name: Set swap file permissions
+      file:
+        path: /swapfile
+        mode: "0600"
+      when: not swap_file.stat.exists
+
+    - name: Make swap file
+      command: mkswap /swapfile
+      when: not swap_file.stat.exists
+
+    - name: Enable swap
+      command: swapon /swapfile
+      when: not swap_file.stat.exists
+
+    - name: Add swap to fstab
+      lineinfile:
+        path: /etc/fstab
+        line: "/swapfile none swap sw 0 0"
+        state: present
+      when: not swap_file.stat.exists
+
+    - name: Install Docker via snap
+      snap:
+        name: docker
+        state: present
+        classic: true
+
+    - name: Install Docker Compose
+      pip:
+        name: docker-compose
+        state: present
+
+    - name: Get latest Sentry version
+      uri:
+        url: https://api.github.com/repos/getsentry/self-hosted/releases/latest
+        method: GET
+      register: latest_release
+      when: sentry_version is not defined or sentry_version == 'latest'
+
+    - name: Set Sentry version to use
+      set_fact:
+        version_to_use: "{{ sentry_version if sentry_version is defined and sentry_version != 'latest' else latest_release.json.tag_name }}"
+      when: (sentry_version is defined and sentry_version != 'latest') or latest_release is defined
+
+    - name: Clone Sentry self-hosted repository
+      git:
+        repo: https://github.com/getsentry/self-hosted.git
+        dest: /root/sentry-self-hosted
+        version: "{{ version_to_use }}"
+        force: true
+
+    - name: Install Sentry
+      shell: ./install.sh --skip-user-creation --report-self-hosted-issues
+      args:
+        chdir: /root/sentry-self-hosted
+      environment:
+        COMPOSE_PROFILES: errors-only
+
+    - name: Stop any running containers
+      shell: docker compose down
+      args:
+        chdir: /root/sentry-self-hosted
+      ignore_errors: true
+
+    - name: Remove Kafka volume to clear lock files
+      shell: docker volume rm sentry-kafka
+      ignore_errors: true
+
+    - name: Remove Kafka log volume
+      shell: docker volume rm sentry-kafka-log
+      ignore_errors: true
+
+    - name: Remove all Sentry volumes (if needed for clean start)
+      shell: docker volume rm sentry-postgres sentry-redis sentry-clickhouse sentry-symbolicator sentry-data
+      ignore_errors: true
+
+    - name: Start Sentry
+      shell: docker compose up -d
+      args:
+        chdir: /root/sentry-self-hosted
+
+    - name: Wait for services to start
+      wait_for:
+        timeout: 30
+
+    - name: Display completion message
+      debug:
+        msg: |
+          Sentry self-hosted installation completed!
+
+          To access Sentry:
+          http://{{ ansible_host }}:9000
+
+          The installation script will create an admin user.
+          Check the logs for the admin credentials or run:
+          cd /root/sentry-self-hosted && ./install.sh --create-user

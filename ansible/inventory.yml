@@ -1,0 +1,12 @@
+all:
+  children:
+    servers:
+      hosts:
+        sentry-server:
+          ansible_host: 195.201.131.71
+          ansible_user: root
+          ansible_ssh_private_key_file: ~/.ssh/id_terraform
+          ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+          sentry_version: 25.7.0
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
