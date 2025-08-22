@@ -1,3 +1,5 @@
+# Dont modify terraform.tfvars, terraform.tfvars.template is used to generate terraform.tfvars using: envsubst < terraform.tfvars.template > terraform.tfvars
+
 # Hetzner Cloud API Token (REQUIRED)
 # Get this from your Hetzner Cloud Console: https://console.hetzner.cloud/
 # Note: Set this via environment variable HCLOUD_TOKEN instead of here
