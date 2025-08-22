@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # create infrastructure
-cd terraform
-&& envsubst < terraform.tfvars.template > terraform.tfvars
+cd terraform \
+&& envsubst < terraform.tfvars.template > terraform.tfvars \
 && terraform apply
 
 # Update inventory.yml with server IP from Terraform
