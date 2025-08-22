@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # create infrastructure
-cd terraform && terraform apply
+cd terraform
+&& envsubst < terraform.tfvars.template > terraform.tfvars
+&& terraform apply
 
 # Update inventory.yml with server IP from Terraform
 cd ../ansible
@@ -25,6 +27,7 @@ all:
           ansible_user: root
           ansible_ssh_private_key_file: ~/.ssh/id_terraform
           ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+          sentry_version: 25.7.0
       vars:
         ansible_python_interpreter: /usr/bin/python3
 EOF

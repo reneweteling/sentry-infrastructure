@@ -1,7 +1,7 @@
 # Hetzner Cloud API Token (REQUIRED)
 # Get this from your Hetzner Cloud Console: https://console.hetzner.cloud/
 # Note: Set this via environment variable HCLOUD_TOKEN instead of here
-# hcloud_token = "your_token_here"
+hcloud_token = "${HCLOUD_TOKEN}"
 
 # Server Configuration
 server_name = "SentryServer"
@@ -12,7 +12,7 @@ server_location = "nbg1"  # Nuremberg, Germany
 # SSH Keys (optional - add your SSH key IDs here)
 # You can get SSH key IDs from: hcloud ssh-key list
 ssh_key_ids = [
-  # "your_ssh_key_id_here"
+  "${HCLOUD_SSH_KEY_ID}"
 ]
 
 # User Data Script (optional)

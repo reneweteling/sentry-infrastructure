@@ -133,7 +133,7 @@
 
     - name: Wait for services to start
       wait_for:
-        timeout: 30
+        timeout: 60
 
     - name: Display completion message
       debug:
