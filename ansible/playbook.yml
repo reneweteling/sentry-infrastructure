@@ -82,6 +82,14 @@
         name: docker-compose
         state: present
 
+    - name: Login to GitLab registry
+      shell: |
+        docker login registry.gitlab.com -u gitlab-ci-token -p {{ lookup('env', 'GITLAB_TOKEN') }}
+
+    - name: Login to Github registry
+      shell: |
+        docker login ghcr.io -u USERNAME -p {{ lookup('env', 'GITHUB_TOKEN') }}
+
     - name: Get latest Sentry version
       uri:
         url: https://api.github.com/repos/getsentry/self-hosted/releases/latest
@@ -101,30 +109,29 @@
         version: "{{ version_to_use }}"
         force: true
 
+    # - name: Stop any running containers
+    #   shell: docker compose down
+    #   args:
+    #     chdir: /root/sentry-self-hosted
+    #   ignore_errors: true
+
+    # - name: Remove all Sentry volumes (if needed for clean start)
+    #   shell: docker volume rm sentry-kafka sentry-kafka-log sentry-postgres sentry-redis sentry-clickhouse sentry-symbolicator sentry-data
+    #   ignore_errors: true
+
     - name: Install Sentry
       shell: ./install.sh --skip-user-creation --report-self-hosted-issues
       args:
         chdir: /root/sentry-self-hosted
       environment:
         COMPOSE_PROFILES: errors-only
+      retries: 1
+      delay: 5
 
-    - name: Stop any running containers
-      shell: docker compose down
+    - name: Create Sentry user
+      shell: docker compose run --rm web createuser --email=rene@weteling.com --password=supersecret --superuser
       args:
         chdir: /root/sentry-self-hosted
-      ignore_errors: true
-
-    - name: Remove Kafka volume to clear lock files
-      shell: docker volume rm sentry-kafka
-      ignore_errors: true
-
-    - name: Remove Kafka log volume
-      shell: docker volume rm sentry-kafka-log
-      ignore_errors: true
-
-    - name: Remove all Sentry volumes (if needed for clean start)
-      shell: docker volume rm sentry-postgres sentry-redis sentry-clickhouse sentry-symbolicator sentry-data
-      ignore_errors: true
 
     - name: Start Sentry
       shell: docker compose up -d

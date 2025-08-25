@@ -17,6 +17,10 @@ The project consists of two main components:
 - Hetzner Cloud account
 - GitHub account (for accessing Sentry repositories)
 
+## Known issues
+
+nbg1 (Nuremberg, Germany) is not allowed to pull from gitlab, so using hel1: https://gitlab.com/gitlab-com/gl-infra/production/-/issues/8121
+
 ## Environment Variables
 
 Create a `.envrc` file in the root directory with the following required variables:

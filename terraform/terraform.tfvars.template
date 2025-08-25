@@ -8,8 +8,8 @@ hcloud_token = "${HCLOUD_TOKEN}"
 # Server Configuration
 server_name = "SentryServer"
 server_image = "ubuntu-22.04"
-server_location = "nbg1"  # Nuremberg, Germany
-# Alternative locations: fsn1 (Falkenstein), hel1 (Helsinki), ash (Ashburn), hil (Hillsboro)
+server_location = "hel1"
+# Alternative locations: nbg1 (Nuremberg, Germany), fsn1 (Falkenstein), hel1 (Helsinki), ash (Ashburn), hil (Hillsboro)
 
 # SSH Keys (optional - add your SSH key IDs here)
 # You can get SSH key IDs from: hcloud ssh-key list
