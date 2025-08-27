@@ -34,5 +34,7 @@ EOF
 
 echo "Updated inventory.yml with server IP: $SERVER_IP"
 
+sleep 5
+
 # Run ansible-playbook to update the inventory
 ansible-playbook -i inventory.yml playbook.yml

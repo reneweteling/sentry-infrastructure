@@ -109,6 +109,10 @@
         version: "{{ version_to_use }}"
         force: true
 
+    # Weird you get the error "No such image: ghcr.io/getsentry/vroom:25.7.0", but pulling works :s
+    - name: Pull vroom image
+      shell: docker pull ghcr.io/getsentry/vroom:{{ version_to_use }}
+
     # - name: Stop any running containers
     #   shell: docker compose down
     #   args:
